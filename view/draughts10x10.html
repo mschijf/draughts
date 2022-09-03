@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+        <style>
+            .grid-container {
+                display: grid;
+                grid-template-columns: 680px auto;
+                background-color: #2196F3;
+                padding: 10px;
+            }
+            .grid-item {
+                background-color: rgba(255, 255, 255, 0.8); 
+                border: 1px solid #2196F3;
+                padding: 20px;
+                text-align: center;
+            }
+            .square {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 60px;
+                height: 60px;
+                font-size: 14px;
+            }
+			.white_square{
+				background-color:#F0D2B4;
+			}
+			.black_square{
+				background-color :#BA7A3A;
+			}            
+            .dot {
+                height: 47px;
+                width: 47px;
+                border-radius: 50%;
+                font-size: 40px;
+                display: inline-block;
+                cursor: pointer
+                
+            }
+            .stoneblack {
+                color: lightgrey;
+                background-color: black;
+				border: 1px solid white;
+  				box-shadow: 0 0 0 3px black;                
+            }
+            .stonewhite {
+                color: slategrey;
+                background-color: white;
+				border: 1px solid black;
+  				box-shadow: 0 0 0 3px white;                
+            }
+            .movecandidate {
+                color: white;
+                background-color: #BA7A3A;
+            }
+
+            .smalldot {
+                height: 40px;
+                width: 40px;
+                border-radius: 50%;
+                display: inline-block;
+            }
+
+            .buttonsquare {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 70px;
+                height: 60px;
+                font-size: 14px;
+            }
+            .tableborder {
+                border-collapse: collapse;
+                border: 5px solid black;
+            }
+            .tableinner2 {
+                border: 1px solid slategrey;
+            }
+
+            .tableleft {
+                text-align: left;
+            }
+        </style>
+    </head>
+
+<!--    flexcontainer-->
+
+    <body onload="createTableBoard()">
+        <div class="grid-container">
+            <div class="grid-item">
+                <table class="tableborder" id="boardTable">
+                </table>
+            </div>
+            <div class="grid-item">
+                <table class="table2">
+                    <tr>
+                        <td class="tableleft" id="loggingInfo"></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="grid-item">
+                <table>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td colspan="4"><input type="checkbox" checked id="showCandidateMoves" onclick="getBoard()" name="showCandidateMoves" value="showCandidateMoves"><label for="showCandidateMoves">Show Candidate Moves</label></td>
+                    </tr>
+                    <tr>
+                        <td>Aan zet</td>
+                        <td>Winnaar</td>
+                        <td></td>
+                        <td colspan="4"><input type="checkbox" id="useComputerPlayer" name="useComp" value="useComp"><label for="useComp"> Play vs Computer</label></td>
+                    </tr>
+                    <tr>
+                        <td><div class="buttonsquare"><div id="whoistomove" class="smalldot"></div></div></td>
+                        <td><div class="buttonsquare"><div id="winner" class="smalldot"></div></div></td>
+                        <td><div class="buttonsquare"><button id="buttonNew" onclick="newGame()">New game</button></div></td>
+                        <td><div class="buttonsquare"><button id="buttonTakeback" onclick="takebackLastMove()">Take Back</button></div></td>
+                        <td><div class="buttonsquare"><button id="buttonPassMove" onclick="doPassMove()">Pass Move</button></div></td>
+                        <td><div class="buttonsquare"><button id="buttonCompute" onclick="computeMove()">Compute Move</button></div></td>
+                        <td><div class="buttonsquare"><input hidden type="number" id="searchDepth" min="1" max="42" step="1" value="7" size="6"></div></td>
+                    </tr>
+                </table>
+                <table class="table2">
+                    <tr>
+                        <td class="tableleft"><b>board id:</b></td>
+                        <td class="tableleft" id="boardId"></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="grid-item">
+                <table class="table2">
+                    <tr>
+                        <td class="tableleft"><b>Evaluation value:</b></td>
+                        <td class="tableleft" id="evaluationValue"></td>
+                    </tr>
+                    <tr>
+                        <td class="tableleft"><b>Computer Move:</b></td>
+                        <td class="tableleft" id="computerMove"></td>
+                    </tr>
+                    <tr>
+                        <td class="tableleft"><b>Nodes:</b></td>
+                        <td class="tableleft" id="nodesCount"></td>
+                    </tr>
+                    <tr>
+                        <td class="tableleft"><b>Time (ms):</b></td>
+                        <td class="tableleft" id="timeSpend"></td>
+                    </tr>
+                    <tr>
+                        <td class="tableleft"><b>Nodes/sec:</b></td>
+                        <td class="tableleft" id="nodesPerSecond"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            function toFieldId(fieldNumber) {
+                return "field" + fieldNumber
+            }
+
+            function createTableBoard() {
+                var table = document.getElementById("boardTable");
+                var fieldNumber = 0
+                for (let row = 0; row < 10; row++) {
+                    var tableRow = table.insertRow(row);
+                    tableRow.className = "tableinner"
+                    for (let col = 0; col < 10; col++) {
+                        var cell = tableRow.insertCell(col);
+                        cell.className = "tableinner"
+
+                        var outerDiv = document.createElement("div");
+                        if ((row+col) % 2 == 0) {
+                        	outerDiv.className = "square black_square"
+                        	
+	                        var innerDiv = document.createElement("div");
+                	        outerDiv.appendChild(innerDiv)
+                	        if (fieldNumber < 20) {
+    	                    	innerDiv.className = "dot stoneblack"
+    	                    	if (fieldNumber == 2)
+    	                    		innerDiv.innerHTML = "X"
+    	                    } else if (fieldNumber >= 30) {
+    	                    	innerDiv.className = "dot stonewhite"
+    	                    	if (fieldNumber == 47)
+    	                    		innerDiv.innerHTML = "X"
+    	                    } else {
+	    	                    innerDiv.className = "dot black_square"
+    	                    	if (fieldNumber == 27) {
+		    	                    innerDiv.className = "dot movecandidate"
+		    	                    innerDiv.innerHTML = "~"
+		    	                }
+    	                    }
+        	                innerDiv.id = toFieldId(fieldNumber)
+        	                fieldNumber = fieldNumber + 1
+            	            innerDiv.onclick = function(){executeMove(col, row)}
+                        } else {
+	                        outerDiv.className = "square white_square"
+                        }
+                        cell.appendChild(outerDiv)
+
+                    }
+                }
+                //getBoard()
+            }
+
+            function toColor(modelColor) {
+                if (modelColor.toUpperCase() === "WHITE") {
+                    return "white"
+                } else if (modelColor.toUpperCase() === "BLACK") {
+                    return "black"
+                } else {
+                    return "darkgreen"
+                }
+            }
+
+            function setElementColor(element, modelColor, playable) {
+                var backgroundColor = toColor(modelColor)
+                var showCandidate = document.getElementById("showCandidateMoves").checked
+                if (playable && showCandidate) {
+                    element.style.backgroundColor = "rgb(0, 115, 0)"
+                } else {
+                    element.style.backgroundColor = backgroundColor
+                }
+                if (backgroundColor === "white") {
+                    element.style.color = "red"
+                } else if (backgroundColor === "black") {
+                    element.style.color = "yellow"
+                } else {
+                    element.style.color = "black"
+                }
+            }
+
+            function showBoard(board) {
+                showFields(board)
+                showWhoIsToMove(board)
+                showActionButtons(board)
+//                 showComputerResult(board.searchResult)
+                showMiscellanious(board)
+            }
+
+            function showFields(board) {
+                for (let fieldNumber = 0; fieldNumber < board.fields.length; fieldNumber++) {
+                    var elem = document.getElementById(toFieldId(fieldNumber));
+                    setElementColor(elem, board.fields[fieldNumber].color, board.fields[fieldNumber].playable)
+                    if (board.fields[fieldNumber].playable) {
+                        elem.style.cursor = "pointer"
+                        elem.style.pointerEvents = 'auto';
+                    } else {
+                        elem.style.cursor = "default"
+                        elem.style.pointerEvents = 'none';
+                    }
+                }
+            }
+
+            function showMiscellanious(board) {
+                document.getElementById("boardId").innerText = board.boardString;
+            }
+
+            function disableAllButtons() {
+                document.getElementById("buttonPassMove").disabled = true
+                document.getElementById("buttonCompute").disabled = true
+                document.getElementById("buttonTakeback").disabled = true
+            }
+
+            function showWhoIsToMove(board) {
+                var elem = document.getElementById("whoistomove");
+                elem.style.backgroundColor = toColor(board.colorToMove);
+            }
+
+            function showActionButtons(board) {
+                document.getElementById("buttonPassMove").disabled = !board.mustPass
+                document.getElementById("buttonCompute").disabled = board.gameFinished
+                document.getElementById("buttonTakeback").disabled = !board.takeBackPossible
+            }
+
+            function numberWithCommas(x) {
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+
+            function moveSequenceToString(moveSequence) {
+                    s = ""
+                    for (let i = 0; i < moveSequence.length; i++) {
+                        if (i > 0) {
+                            s = s + "-"
+                        }
+                        s = s + String.fromCharCode(97 + moveSequence[i].col) + String.fromCharCode(48 + moveSequence[i].row + 1)
+                    }
+                    return s
+            }
+
+            function showComputerResult(searchResult) {
+                if (searchResult != null) {
+                    document.getElementById("computerMove").innerText = moveSequenceToString(searchResult.moveSequence)
+                    document.getElementById("evaluationValue").innerText = numberWithCommas(searchResult.evaluationValue) + "%"
+                    document.getElementById("nodesCount").innerText = numberWithCommas(searchResult.nodesVisited)
+                    document.getElementById("timeSpend").innerText = numberWithCommas(searchResult.durationMillis)
+                    document.getElementById("nodesPerSecond").innerText = numberWithCommas(searchResult.nodesPerSecond)
+                } else {
+                    document.getElementById("computerMove").innerText = ""
+                    document.getElementById("evaluationValue").innerText = ""
+                    document.getElementById("nodesCount").innerText = ""
+                    document.getElementById("timeSpend").innerText = ""
+                    document.getElementById("nodesPerSecond").innerText = ""
+                }
+            }
+
+            function showComputeStatusInfo(info) {
+                document.getElementById("loggingInfo").innerText = info.statusLine
+            }
+        </script>
+
+
+        <script>
+            function executeMove(columnNumber, rowNumber) {
+                var request = new XMLHttpRequest();
+                request.open("POST", "api/v1/move/" + columnNumber + "/" + rowNumber);
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                        var useComputer = document.getElementById("useComputerPlayer").checked
+                        if (!board.gameFinished && useComputer) {
+                            computeMove()
+                        }
+                    }
+                };
+                request.send();
+            }
+
+            function takebackLastMove() {
+                var request = new XMLHttpRequest();
+                request.open("POST", "api/v1/move/takeback/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+            function doPassMove() {
+                var request = new XMLHttpRequest();
+                request.open("POST", "api/v1/move/passmove/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+            function computeMove() {
+                disableAllButtons()
+                var request = new XMLHttpRequest();
+                request.open("POST", "api/v1/move/compute/"+document.getElementById("searchDepth").value);
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                        getComputeStatusInfo()
+                    }
+                };
+                request.send();
+            }
+
+            function createBoard() {
+                var request = new XMLHttpRequest();
+
+                request.open("GET", "api/v1/board/sizes");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var sizes = JSON.parse(this.responseText);
+                        createTableBoard(sizes);
+                    }
+                };
+                request.send();
+            }
+
+            function getBoard() {
+                var request = new XMLHttpRequest();
+
+                request.open("GET", "api/v1/board/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+            function newGame() {
+                var request = new XMLHttpRequest();
+                request.open("POST", "api/v1/board/");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+//             function getComputeStatusInfo() {
+//                 var request = new XMLHttpRequest();
+// 
+//                 request.open("GET", "api/v1/compute/info/");
+//                 request.onreadystatechange = function() {
+//                     if(this.readyState === 4 && this.status === 200) {
+//                         var info = JSON.parse(this.responseText);
+//                         showComputeStatusInfo(info);
+//                     }
+//                 };
+//                 request.send();
+//             }
+//             const myInterval = setInterval(getComputeStatusInfo, 1000);
+
+        </script>
+    </body>
+</html>
