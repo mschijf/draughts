@@ -176,21 +176,7 @@
                         	
 	                        var innerDiv = document.createElement("div");
                 	        outerDiv.appendChild(innerDiv)
-                	        if (fieldNumber < 20) {
-    	                    	innerDiv.className = "dot stoneblack"
-    	                    	if (fieldNumber == 2)
-    	                    		innerDiv.innerHTML = "X"
-    	                    } else if (fieldNumber >= 30) {
-    	                    	innerDiv.className = "dot stonewhite"
-    	                    	if (fieldNumber == 47)
-    	                    		innerDiv.innerHTML = "X"
-    	                    } else {
-	    	                    innerDiv.className = "dot black_square"
-    	                    	if (fieldNumber == 27) {
-		    	                    innerDiv.className = "dot movecandidate"
-		    	                    innerDiv.innerHTML = "~"
-		    	                }
-    	                    }
+                            innerDiv.className = "dot black_square"
         	                innerDiv.id = toFieldId(fieldNumber)
         	                fieldNumber = fieldNumber + 1
             	            innerDiv.onclick = function(){executeMove(col, row)}
@@ -198,36 +184,35 @@
 	                        outerDiv.className = "square white_square"
                         }
                         cell.appendChild(outerDiv)
-
                     }
                 }
-                //getBoard()
+                getBoard()
             }
 
-            function toColor(modelColor) {
+            function toClassName(modelColor) {
                 if (modelColor.toUpperCase() === "WHITE") {
-                    return "white"
+                    return "dot stonewhite"
                 } else if (modelColor.toUpperCase() === "BLACK") {
-                    return "black"
+                    return "dot stoneblack"
                 } else {
-                    return "darkgreen"
+                    return "dot black_square"
                 }
             }
 
-            function setElementColor(element, modelColor, playable) {
-                var backgroundColor = toColor(modelColor)
-                var showCandidate = document.getElementById("showCandidateMoves").checked
-                if (playable && showCandidate) {
-                    element.style.backgroundColor = "rgb(0, 115, 0)"
+            function setElement(element, modelColor, isKing, playable) {
+                var className = toClassName(modelColor)
+                element.className = className
+                if (isKing) {
+                    element.innerHTML = "X"    
                 } else {
-                    element.style.backgroundColor = backgroundColor
+                    element.innerHTML = ""    
                 }
-                if (backgroundColor === "white") {
-                    element.style.color = "red"
-                } else if (backgroundColor === "black") {
-                    element.style.color = "yellow"
+                if (playable) {
+                    element.style.cursor = "pointer"
+                    element.style.pointerEvents = 'auto';
                 } else {
-                    element.style.color = "black"
+                    element.style.cursor = "default"
+                    element.style.pointerEvents = 'none';
                 }
             }
 
@@ -242,14 +227,7 @@
             function showFields(board) {
                 for (let fieldNumber = 0; fieldNumber < board.fields.length; fieldNumber++) {
                     var elem = document.getElementById(toFieldId(fieldNumber));
-                    setElementColor(elem, board.fields[fieldNumber].color, board.fields[fieldNumber].playable)
-                    if (board.fields[fieldNumber].playable) {
-                        elem.style.cursor = "pointer"
-                        elem.style.pointerEvents = 'auto';
-                    } else {
-                        elem.style.cursor = "default"
-                        elem.style.pointerEvents = 'none';
-                    }
+                    setElement(elem, board.fields[fieldNumber].color, board.fields[fieldNumber].isKing, board.fields[fieldNumber].playable)
                 }
             }
 
@@ -265,7 +243,7 @@
 
             function showWhoIsToMove(board) {
                 var elem = document.getElementById("whoistomove");
-                elem.style.backgroundColor = toColor(board.colorToMove);
+                elem.style.backgroundColor = toClassName(board.colorToMove);
             }
 
             function showActionButtons(board) {

@@ -1,12 +1,11 @@
 package controller
 
 import (
-	"draughts/board"
 	_ "draughts/docs"
 	"draughts/service"
 	"net/http"
 	"os"
-	"strconv"
+	// "strconv"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -15,20 +14,13 @@ import (
 
 const address = "localhost"
 const port = "8080"
-const boardCookie = "OTHELLOSTATUS"
-const boardSizeCookie = "OTHELLOBOARDSIZE"
+const boardCookie = "DRAUGHTSTATUS"
 
 func setBoardStringCookie(c *gin.Context, cookieValue string) {
 	c.SetCookie(boardCookie, cookieValue, 3600*24*365, "/", address, false, true)
-	c.SetCookie(boardSizeCookie, strconv.Itoa(board.BoardSize), 3600*24*365, "/", address, false, true)
 }
 
 func getStatusCookie(c *gin.Context) string {
-	sizeCookie, _ := c.Cookie(boardSizeCookie)
-	size, _ := strconv.Atoi(sizeCookie)
-	if size != board.BoardSize {
-		return ""
-	}
 	statusCookie, _ := c.Cookie(boardCookie)
 	return statusCookie
 }
@@ -48,46 +40,31 @@ func getBoard(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, result)
 }
 
-// @Router       /api/v1/move/{column}/{row} [post]
-func doMove(c *gin.Context) {
-	col, _ := strconv.Atoi(c.Param("column"))
-	row, _ := strconv.Atoi(c.Param("row"))
-	cookie := getStatusCookie(c)
-	result, statusString := service.DoMove(cookie, col, row)
-	setBoardStringCookie(c, statusString)
-	c.IndentedJSON(http.StatusOK, result)
-}
+// // @Router       /api/v1/move/{column}/{row} [post]
+// func doMove(c *gin.Context) {
+// 	col, _ := strconv.Atoi(c.Param("column"))
+// 	row, _ := strconv.Atoi(c.Param("row"))
+// 	cookie := getStatusCookie(c)
+// 	result, statusString := service.DoMove(cookie, col, row)
+// 	setBoardStringCookie(c, statusString)
+// 	c.IndentedJSON(http.StatusOK, result)
+// }
 
-// @Router       /api/v1/move/passmove [post]
-func doPassMove(c *gin.Context) {
-	cookie := getStatusCookie(c)
-	result, statusString := service.DoPassMove(cookie)
-	setBoardStringCookie(c, statusString)
-	c.IndentedJSON(http.StatusOK, result)
-}
+// // @Router       /api/v1/move/passmove [post]
+// func doPassMove(c *gin.Context) {
+// 	cookie := getStatusCookie(c)
+// 	result, statusString := service.DoPassMove(cookie)
+// 	setBoardStringCookie(c, statusString)
+// 	c.IndentedJSON(http.StatusOK, result)
+// }
 
-// @Router       /api/v1/move/takeback/ [post]
-func takeBackLastMove(c *gin.Context) {
-	cookie := getStatusCookie(c)
-	result, statusString := service.TakeBackLastMove(cookie)
-	setBoardStringCookie(c, statusString)
-	c.IndentedJSON(http.StatusOK, result)
-}
-
-// @Router       /api/v1/move/compute/{searchDepth} [post]
-func computeMove(c *gin.Context) {
-	cookie := getStatusCookie(c)
-	result, statusString := service.ComputeMove(cookie)
-	setBoardStringCookie(c, statusString)
-	c.IndentedJSON(http.StatusOK, result)
-}
-
-// @Router       /api/v1/compute/info/ [get]
-func getComputeInfo(c *gin.Context) {
-	cookie := getStatusCookie(c)
-	result := service.GetComputeInfo(cookie)
-	c.IndentedJSON(http.StatusOK, result)
-}
+// // @Router       /api/v1/move/takeback/ [post]
+// func takeBackLastMove(c *gin.Context) {
+// 	cookie := getStatusCookie(c)
+// 	result, statusString := service.TakeBackLastMove(cookie)
+// 	setBoardStringCookie(c, statusString)
+// 	c.IndentedJSON(http.StatusOK, result)
+// }
 
 // @Router       / [get]
 func getHtml(c *gin.Context) {
@@ -116,11 +93,9 @@ func setHandlers(router *gin.Engine) {
 
 	router.GET("/api/v1/board", getBoard)
 	router.POST("/api/v1/board", getNewBoard)
-	router.POST("/api/v1/move/:column/:row/", doMove)
-	router.POST("/api/v1/move/passmove/", doPassMove)
-	router.POST("/api/v1/move/takeback/", takeBackLastMove)
-	router.POST("/api/v1/move/compute/:searchDepth", computeMove)
-	router.GET("/api/v1/compute/info/", getComputeInfo)
+	// router.POST("/api/v1/move/:column/:row/", doMove)
+	// router.POST("/api/v1/move/passmove/", doPassMove)
+	// router.POST("/api/v1/move/takeback/", takeBackLastMove)
 }
 
 func startRouter(router *gin.Engine) {
