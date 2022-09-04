@@ -73,8 +73,8 @@ type BitBoard struct {
 const white = 0
 const black = 1
 
-// const illegalBits uint64 = 0xFF_80_10_02_00_40_08_01
-// const legalBits uint64  = ^illegalBits
+const illegalBits uint64 = 0xFF_80_10_02_00_40_08_01
+const legalBits uint64  = ^illegalBits
 
 const whiteStonesStartFields uint64 = 0x00_7F_EF_FC_00_00_00_00
 const blackStonesStartFields uint64 = 0x00_00_00_00_00_3F_F7_FE

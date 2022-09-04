@@ -117,7 +117,6 @@
                         <td><div class="buttonsquare"><div id="winner" class="smalldot"></div></div></td>
                         <td><div class="buttonsquare"><button id="buttonNew" onclick="newGame()">New game</button></div></td>
                         <td><div class="buttonsquare"><button id="buttonTakeback" onclick="takebackLastMove()">Take Back</button></div></td>
-                        <td><div class="buttonsquare"><button id="buttonPassMove" onclick="doPassMove()">Pass Move</button></div></td>
                         <td><div class="buttonsquare"><button id="buttonCompute" onclick="computeMove()">Compute Move</button></div></td>
                         <td><div class="buttonsquare"><input hidden type="number" id="searchDepth" min="1" max="42" step="1" value="7" size="6"></div></td>
                     </tr>
@@ -179,7 +178,7 @@
                             innerDiv.className = "dot black_square"
         	                innerDiv.id = toFieldId(fieldNumber)
         	                fieldNumber = fieldNumber + 1
-            	            innerDiv.onclick = function(){executeMove(col, row)}
+            	            innerDiv.onclick = function(){executeMove(fieldNumber)}
                         } else {
 	                        outerDiv.className = "square white_square"
                         }
@@ -236,7 +235,6 @@
             }
 
             function disableAllButtons() {
-                document.getElementById("buttonPassMove").disabled = true
                 document.getElementById("buttonCompute").disabled = true
                 document.getElementById("buttonTakeback").disabled = true
             }
@@ -247,7 +245,6 @@
             }
 
             function showActionButtons(board) {
-                document.getElementById("buttonPassMove").disabled = !board.mustPass
                 document.getElementById("buttonCompute").disabled = board.gameFinished
                 document.getElementById("buttonTakeback").disabled = !board.takeBackPossible
             }
@@ -290,9 +287,14 @@
 
 
         <script>
-            function executeMove(columnNumber, rowNumber) {
+            function executeMove(fromField, toField) {
                 var request = new XMLHttpRequest();
-                request.open("POST", "api/v1/move/" + columnNumber + "/" + rowNumber);
+                if (toField == null) {
+                    console.log("tofield = null")
+                    request.open("POST", "api/v1/move/" + fromField);
+                } else {
+                    request.open("POST", "api/v1/move/" + fromField + "/" + toField);
+                }
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
@@ -309,18 +311,6 @@
             function takebackLastMove() {
                 var request = new XMLHttpRequest();
                 request.open("POST", "api/v1/move/takeback/");
-                request.onreadystatechange = function() {
-                    if(this.readyState === 4 && this.status === 200) {
-                        var board = JSON.parse(this.responseText);
-                        showBoard(board);
-                    }
-                };
-                request.send();
-            }
-
-            function doPassMove() {
-                var request = new XMLHttpRequest();
-                request.open("POST", "api/v1/move/passmove/");
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);

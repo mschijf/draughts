@@ -78,10 +78,6 @@ func (hb *HumanBoard) IsBlackKing(field int) bool {
 	return fieldToBit(field)&hb.bitBoard.kings[black] != 0
 }
 
-func (hb *HumanBoard) IsPlayable(field int) bool {
-	return true
-}
-
 func (hb *HumanBoard) HasHistory() bool {
 	// return !hb.stack.IsEmpty()
 	return false
@@ -117,3 +113,15 @@ func (hb *HumanBoard) ToBoardStatusString() string {
 func (hb *HumanBoard) GetColorToMove() int {
 	return hb.colorToMove
 }
+
+func (hb *HumanBoard) IsPlayableField(field int) bool {
+	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
+
+	for _, move := range moveList {
+		if fieldToBit(field) == move.from {
+			return true
+		}
+	}
+	return false
+}
+
