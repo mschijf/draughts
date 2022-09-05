@@ -161,7 +161,7 @@
 
             function createTableBoard() {
                 var table = document.getElementById("boardTable");
-                var fieldNumber = 0
+                var fieldNumber = 1
                 for (let row = 0; row < 10; row++) {
                     var tableRow = table.insertRow(row);
                     tableRow.className = "tableinner"
@@ -170,7 +170,7 @@
                         cell.className = "tableinner"
 
                         var outerDiv = document.createElement("div");
-                        if ((row+col) % 2 == 0) {
+                        if ((row+col) % 2 == 1) {
                         	outerDiv.className = "square black_square"
                         	
 	                        var innerDiv = document.createElement("div");
@@ -178,7 +178,6 @@
                             innerDiv.className = "dot black_square"
         	                innerDiv.id = toFieldId(fieldNumber)
         	                fieldNumber = fieldNumber + 1
-            	            innerDiv.onclick = function(){executeMove(fieldNumber)}
                         } else {
 	                        outerDiv.className = "square white_square"
                         }
@@ -198,15 +197,24 @@
                 }
             }
 
-            function setElement(element, modelColor, isKing, playable) {
-                var className = toClassName(modelColor)
+            function setElement(element, fromField, fieldInfo) {
+                var className = toClassName(fieldInfo.color)
                 element.className = className
-                if (isKing) {
+                element.innerHTML = ""    
+                if (fieldInfo.isKing) {
                     element.innerHTML = "X"    
-                } else {
-                    element.innerHTML = ""    
                 }
-                if (playable) {
+                if (fieldInfo.isPlayableFromField) {
+                    element.onclick = function(){touchPiece(fieldInfo.fieldNumber)}
+                    element.style.cursor = "pointer"
+                    element.style.pointerEvents = 'auto';
+                } else if (fieldInfo.hasTouchedPiece) {
+                    element.onclick = function(){untouchPiece()}
+                    element.style.cursor = "pointer"
+                    element.style.pointerEvents = 'auto';
+                } else if (fieldInfo.isPlayableToField) {
+                    element.innerHTML = "~"    
+                    element.onclick = function(){executeMove(fromField, fieldInfo.fieldNumber)}
                     element.style.cursor = "pointer"
                     element.style.pointerEvents = 'auto';
                 } else {
@@ -224,9 +232,9 @@
             }
 
             function showFields(board) {
-                for (let fieldNumber = 0; fieldNumber < board.fields.length; fieldNumber++) {
-                    var elem = document.getElementById(toFieldId(fieldNumber));
-                    setElement(elem, board.fields[fieldNumber].color, board.fields[fieldNumber].isKing, board.fields[fieldNumber].playable)
+                for (let i = 0; i < board.fields.length; i++) {
+                    var elem = document.getElementById(toFieldId(board.fields[i].fieldNumber));
+                    setElement(elem, board.touchedPieceField, board.fields[i])
                 }
             }
 
@@ -289,12 +297,7 @@
         <script>
             function executeMove(fromField, toField) {
                 var request = new XMLHttpRequest();
-                if (toField == null) {
-                    console.log("tofield = null")
-                    request.open("POST", "api/v1/move/" + fromField);
-                } else {
-                    request.open("POST", "api/v1/move/" + fromField + "/" + toField);
-                }
+                request.open("POST", "api/v1/move/" + fromField + "/" + toField);
                 request.onreadystatechange = function() {
                     if(this.readyState === 4 && this.status === 200) {
                         var board = JSON.parse(this.responseText);
@@ -303,6 +306,30 @@
                         if (!board.gameFinished && useComputer) {
                             computeMove()
                         }
+                    }
+                };
+                request.send();
+            }
+
+            function touchPiece(fromField) {
+                var request = new XMLHttpRequest();
+                request.open("POST", "api/v1/touch/" + fromField);
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+                request.send();
+            }
+
+            function untouchPiece() {
+                var request = new XMLHttpRequest();
+                request.open("POST", "api/v1/untouch");
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
                     }
                 };
                 request.send();
@@ -329,19 +356,6 @@
                         var board = JSON.parse(this.responseText);
                         showBoard(board);
                         getComputeStatusInfo()
-                    }
-                };
-                request.send();
-            }
-
-            function createBoard() {
-                var request = new XMLHttpRequest();
-
-                request.open("GET", "api/v1/board/sizes");
-                request.onreadystatechange = function() {
-                    if(this.readyState === 4 && this.status === 200) {
-                        var sizes = JSON.parse(this.responseText);
-                        createTableBoard(sizes);
                     }
                 };
                 request.send();

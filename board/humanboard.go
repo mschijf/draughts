@@ -9,8 +9,9 @@ import (
 )
 
 type HumanBoard struct {
-	bitBoard    BitBoard
-	colorToMove int
+	bitBoard     BitBoard
+	colorToMove  int
+	touchedField int
 	// stack       collection.Stack[Move]
 }
 
@@ -47,9 +48,10 @@ func StringToBitBoard(boardString string) HumanBoard {
 	colorToMove, _ := strconv.Atoi(boardStringParts[0])
 	whitePieces, _ := strconv.ParseUint(boardStringParts[1], 16, 64)
 	blackPieces, _ := strconv.ParseUint(boardStringParts[2], 16, 64)
-	kings, _       := strconv.ParseUint(boardStringParts[3], 16, 64)
+	kings, _ := strconv.ParseUint(boardStringParts[3], 16, 64)
+	touchedField, _ := strconv.ParseInt(boardStringParts[4], 10, 32)
 
-	humanBoard := HumanBoard{bitBoard: InitBoard(whitePieces &^ kings, blackPieces &^ kings, whitePieces & kings, blackPieces & kings), colorToMove: colorToMove}
+	humanBoard := HumanBoard{bitBoard: InitBoard(whitePieces&^kings, blackPieces&^kings, whitePieces&kings, blackPieces&kings), colorToMove: colorToMove, touchedField: int(touchedField)}
 
 	return humanBoard
 }
@@ -96,32 +98,81 @@ func (hb *HumanBoard) BlackHasWon() bool {
 }
 
 func (hb *HumanBoard) ToBoardString() string {
-	var whitePieces = hb.bitBoard.stones[1]|hb.bitBoard.kings[1]
-	var blackPieces = hb.bitBoard.stones[0]|hb.bitBoard.kings[0]
-	var kings = hb.bitBoard.kings[0]|hb.bitBoard.kings[1]
-	var colorChar = 'w'
-	if hb.IsBlackToMove() {
-		colorChar = 'b'
-	}
-	return fmt.Sprintf("%c:%x:%x:%x", colorChar, blackPieces, whitePieces, kings)
+	var whitePieces = hb.bitBoard.stones[1] | hb.bitBoard.kings[1]
+	var blackPieces = hb.bitBoard.stones[0] | hb.bitBoard.kings[0]
+	var kings = hb.bitBoard.kings[0] | hb.bitBoard.kings[1]
+	return fmt.Sprintf("%d:%x:%x:%x:%d", hb.colorToMove, blackPieces, whitePieces, kings, hb.touchedField)
 }
 
 func (hb *HumanBoard) ToBoardStatusString() string {
 	return hb.ToBoardString()
 }
 
+func (hb *HumanBoard) OpponentColor() int {
+	return 1 - hb.colorToMove
+}
+
 func (hb *HumanBoard) GetColorToMove() int {
 	return hb.colorToMove
 }
 
-func (hb *HumanBoard) IsPlayableField(field int) bool {
-	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
+func (hb *HumanBoard) IsPlayableFromField(field int) bool {
+	if hb.touchedField == field {
+		return false
+	}
 
+	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
 	for _, move := range moveList {
 		if fieldToBit(field) == move.from {
 			return true
 		}
 	}
 	return false
+}
+
+func (hb *HumanBoard) GetTouchedField() int {
+	return hb.touchedField
+}
+
+func (hb *HumanBoard) IsTouchedField(field int) bool {
+	return field == hb.touchedField
+}
+
+func (hb *HumanBoard) IsplayableToField(field int) bool {
+	if hb.touchedField == 0 {
+		return false
+	}
+
+	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
+	for _, move := range moveList {
+		if fieldToBit(hb.touchedField) == move.from && fieldToBit(field) == move.to {
+			return true
+		}
+	}
+	return false
+}
+
+//-------------------------------------------------------------------------------------------------
+
+func (hb *HumanBoard) DoTouch(field int) {
+	hb.touchedField = field
+}
+
+func (hb *HumanBoard) UndoTouch() {
+	hb.touchedField = 0
+}
+
+func (hb *HumanBoard) DoMove(fromField, toField int) {
+	//todo verify if there is a field that is touched, corresponding with fromField
+	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
+	for _, move := range moveList {
+		if fieldToBit(fromField) == move.from && fieldToBit(toField) == move.to {
+			hb.bitBoard.doMove(&move, hb.colorToMove)
+			hb.UndoTouch()
+			hb.colorToMove = hb.OpponentColor()
+			return
+		}
+	}
+	panic("move not found")
 }
 

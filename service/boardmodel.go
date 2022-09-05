@@ -5,21 +5,25 @@ import (
 )
 
 type FieldModel struct {
-	Field    int    `json:"field"`
-	Color    string `json:"color"`
-	IsKing   bool   `json:"isKing"`
-	Playable bool   `json:"playable"`
+	FieldNumber         int    `json:"fieldNumber"`
+	Color               string `json:"color"`
+	IsKing              bool   `json:"isKing"`
+	IsPlayableFromField bool   `json:"isPlayableFromField"`
+	HasTouchedPiece     bool   `json:"hasTouchedPiece"`
+	IsPlayableToField   bool   `json:"isPlayableToField"`
+	IsPieceToBeCaptured bool   `json:"isPieceToBeCaptured"`
 }
 
 const maxFields = 50
 
 type BoardModel struct {
-	Fields           [maxFields]FieldModel `json:"fields"`
-	ColorToMove      string                `json:"colorToMove"`
-	TakeBackPossible bool                  `json:"takeBackPossible"`
-	GameFinished     bool                  `json:"gameFinished"`
-	BoardString      string                `json:"boardString"`
-	ColorHasWon      string                `json:"colorHasWon"`
+	Fields            [maxFields]FieldModel `json:"fields"`
+	ColorToMove       string                `json:"colorToMove"`
+	TakeBackPossible  bool                  `json:"takeBackPossible"`
+	GameFinished      bool                  `json:"gameFinished"`
+	BoardString       string                `json:"boardString"`
+	ColorHasWon       string                `json:"colorHasWon"`
+	TouchedPieceField int                   `json:"touchedPieceField"`
 }
 
 const whiteColor = "white"
@@ -47,20 +51,21 @@ func ToBoardModel(humanBoard *board.HumanBoard) BoardModel {
 	default:
 		bm.ColorHasWon = noneColor
 	}
+	bm.TouchedPieceField = humanBoard.GetTouchedField()
 	return bm
 }
 
 func getFieldModel(bb *board.HumanBoard, field int) FieldModel {
 	switch {
 	case bb.IsBlackStone(field):
-		return FieldModel{field, blackColor, false, bb.IsPlayableField(field)}
+		return FieldModel{field, blackColor, false, bb.IsPlayableFromField(field), bb.IsTouchedField(field), false, false}
 	case bb.IsBlackKing(field):
-		return FieldModel{field, blackColor, true, bb.IsPlayableField(field)}
+		return FieldModel{field, blackColor, true, bb.IsPlayableFromField(field), bb.IsTouchedField(field), false, false}
 	case bb.IsWhiteStone(field):
-		return FieldModel{field, whiteColor, false, bb.IsPlayableField(field)}
+		return FieldModel{field, whiteColor, false, bb.IsPlayableFromField(field), bb.IsTouchedField(field), false, false}
 	case bb.IsWhiteKing(field):
-		return FieldModel{field, whiteColor, true, bb.IsPlayableField(field)}
+		return FieldModel{field, whiteColor, true, bb.IsPlayableFromField(field), bb.IsTouchedField(field), false, false}
 	default:
-		return FieldModel{field, noneColor, false, false}
+		return FieldModel{field, noneColor, false, false, false, bb.IsplayableToField(field), false}
 	}
 }

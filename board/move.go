@@ -67,3 +67,10 @@ func (bitBoard *BitBoard) generateStoneCaptures(colorToMove int) []Move {
 	var resultList []Move
 	return resultList
 }
+
+//-------------------------------------------------------------------------------------------------
+
+func (bitBoard *BitBoard) doMove(move *Move, colorToMove int) {
+	bitBoard.stones[colorToMove] ^= move.from
+	bitBoard.stones[colorToMove] ^= move.to	
+}

@@ -14,11 +14,23 @@ func GetBoard(boardStatusString string) (BoardModel, string) {
 	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
 }
 
-// func DoMove(boardStatusString string, col, row int) (BoardModel, string) {
-// 	currentBoard := board.StringToBitBoard(boardStatusString)
-// 	currentBoard.DoColRowMove(col, row)
-// 	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
-// }
+func DoFirstMovePart(boardStatusString string, fieldNumber int) (BoardModel, string) {
+	currentBoard := board.StringToBitBoard(boardStatusString)
+	currentBoard.DoTouch(fieldNumber)
+	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
+}
+
+func UndoFirstMovePart(boardStatusString string) (BoardModel, string) {
+	currentBoard := board.StringToBitBoard(boardStatusString)
+	currentBoard.UndoTouch()
+	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
+}
+
+func DoMove(boardStatusString string, from, to int) (BoardModel, string) {
+	currentBoard := board.StringToBitBoard(boardStatusString)
+	currentBoard.DoMove(from, to)
+	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
+}
 
 // func DoPassMove(boardStatusString string) (BoardModel, string) {
 // 	currentBoard := board.StringToBitBoard(boardStatusString)
