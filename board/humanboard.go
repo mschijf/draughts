@@ -167,8 +167,8 @@ func (hb *HumanBoard) DoMove(fromField, toField int) {
 	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
 	for _, move := range moveList {
 		if fieldToBit(fromField) == move.from && fieldToBit(toField) == move.to {
-			hb.bitBoard.doMove(&move, hb.colorToMove)
 			hb.UndoTouch()
+			hb.bitBoard.doMove(&move, hb.colorToMove)
 			hb.colorToMove = hb.OpponentColor()
 			return
 		}

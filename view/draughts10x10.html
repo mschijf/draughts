@@ -155,8 +155,13 @@
         </div>
 
         <script>
+            const fieldIdPrefix = "field"
             function toFieldId(fieldNumber) {
-                return "field" + fieldNumber
+                return fieldIdPrefix + fieldNumber
+            }
+
+            function toFieldNumber(fieldId) {
+                return parseInt(fieldId.substr(fieldIdPrefix.length, 100));
             }
 
             function createTableBoard() {
@@ -197,6 +202,28 @@
                 }
             }
 
+            function drag(ev) {
+                var fieldNumber = toFieldNumber(ev.target.id)
+                ev.dataTransfer.setData("from", fieldNumber);
+                touchPiece(fieldNumber)
+            }
+
+            function canceldrag(ev) {
+                if (ev.dataTransfer.dropEffect == "none") {
+                    untouchPiece()
+                }
+            }
+
+            function allowDrop(ev) {
+                ev.preventDefault();
+            }
+
+            function drop(ev, toField) {
+                ev.preventDefault();
+                var fromField = ev.dataTransfer.getData("from");
+                executeMove(fromField, toField)
+            }
+
             function setElement(element, fromField, fieldInfo) {
                 var className = toClassName(fieldInfo.color)
                 element.className = className
@@ -204,17 +231,24 @@
                 if (fieldInfo.isKing) {
                     element.innerHTML = "X"    
                 }
+
+                element.setAttribute("draggable", false)
                 if (fieldInfo.isPlayableFromField) {
-                    element.onclick = function(){touchPiece(fieldInfo.fieldNumber)}
+                    //element.onclick = function(){touchPiece(fieldInfo.fieldNumber)}
+                    element.ondragstart=function(){drag(event)}
+                    element.ondragend=function(){canceldrag(event)}
+                    element.setAttribute("draggable", true)
                     element.style.cursor = "pointer"
                     element.style.pointerEvents = 'auto';
                 } else if (fieldInfo.hasTouchedPiece) {
-                    element.onclick = function(){untouchPiece()}
+                    //element.onclick = function(){untouchPiece()}
                     element.style.cursor = "pointer"
                     element.style.pointerEvents = 'auto';
                 } else if (fieldInfo.isPlayableToField) {
                     element.className = "dot movecandidate"
-                    element.onclick = function(){executeMove(fromField, fieldInfo.fieldNumber)}
+                    //element.onclick = function(){executeMove(fromField, fieldInfo.fieldNumber)}
+                    element.ondrop=function(){drop(event, fieldInfo.fieldNumber)}
+                    element.ondragover=function(){allowDrop(event)}
                     element.style.cursor = "pointer"
                     element.style.pointerEvents = 'auto';
                 } else {
