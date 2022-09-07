@@ -51,7 +51,7 @@
             }
             .movecandidate {
                 color: white;
-                background-color: #BA7A3A;
+                background-color :#d59a5f;
             }
 
             .smalldot {
@@ -213,7 +213,7 @@
                     element.style.cursor = "pointer"
                     element.style.pointerEvents = 'auto';
                 } else if (fieldInfo.isPlayableToField) {
-                    element.innerHTML = "~"    
+                    element.className = "dot movecandidate"
                     element.onclick = function(){executeMove(fromField, fieldInfo.fieldNumber)}
                     element.style.cursor = "pointer"
                     element.style.pointerEvents = 'auto';
