@@ -1,7 +1,9 @@
 package board
 
 import (
+	"draughts/math/bit64math"
 	"fmt"
+
 	// "draughts/collection"
 	// "draughts/math/bit64math"
 	"strconv"
@@ -11,7 +13,6 @@ import (
 type HumanBoard struct {
 	bitBoard     BitBoard
 	colorToMove  int
-	touchedField int
 	// stack       collection.Stack[Move]
 }
 
@@ -40,6 +41,24 @@ func fieldToBit(field int) uint64 {
 	}
 }
 
+func bitToField(bit uint64) int {
+	var bitIndex = bit64math.MostRightBitIndex(bit)
+	switch {
+	case 1 <= bitIndex && bitIndex <= 10:
+		return bitIndex
+	case 12 <= bitIndex && bitIndex <= 21:
+		return bitIndex - 1
+	case 23 <= bitIndex && bitIndex <= 32:
+		return bitIndex - 2
+	case 34 <= bitIndex && bitIndex <= 43:
+		return bitIndex - 3
+	case 45 <= bitIndex && bitIndex <= 54:
+		return bitIndex - 4
+	default:
+		panic(fmt.Sprintf("Bitindex for bit cannot be mapoped to field. Bit is %x, bitindex = %d", bit, bitIndex))
+	}
+}
+
 func StringToBitBoard(boardString string) HumanBoard {
 	if boardString == "" {
 		return InitStartBoard()
@@ -49,9 +68,8 @@ func StringToBitBoard(boardString string) HumanBoard {
 	whitePieces, _ := strconv.ParseUint(boardStringParts[1], 16, 64)
 	blackPieces, _ := strconv.ParseUint(boardStringParts[2], 16, 64)
 	kings, _ := strconv.ParseUint(boardStringParts[3], 16, 64)
-	touchedField, _ := strconv.ParseInt(boardStringParts[4], 10, 32)
 
-	humanBoard := HumanBoard{bitBoard: InitBoard(whitePieces&^kings, blackPieces&^kings, whitePieces&kings, blackPieces&kings), colorToMove: colorToMove, touchedField: int(touchedField)}
+	humanBoard := HumanBoard{bitBoard: InitBoard(whitePieces&^kings, blackPieces&^kings, whitePieces&kings, blackPieces&kings), colorToMove: colorToMove}
 
 	return humanBoard
 }
@@ -101,7 +119,7 @@ func (hb *HumanBoard) ToBoardString() string {
 	var whitePieces = hb.bitBoard.stones[1] | hb.bitBoard.kings[1]
 	var blackPieces = hb.bitBoard.stones[0] | hb.bitBoard.kings[0]
 	var kings = hb.bitBoard.kings[0] | hb.bitBoard.kings[1]
-	return fmt.Sprintf("%d:%x:%x:%x:%d", hb.colorToMove, blackPieces, whitePieces, kings, hb.touchedField)
+	return fmt.Sprintf("%d:%x:%x:%x", hb.colorToMove, blackPieces, whitePieces, kings)
 }
 
 func (hb *HumanBoard) ToBoardStatusString() string {
@@ -117,10 +135,6 @@ func (hb *HumanBoard) GetColorToMove() int {
 }
 
 func (hb *HumanBoard) IsPlayableFromField(field int) bool {
-	if hb.touchedField == field {
-		return false
-	}
-
 	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
 	for _, move := range moveList {
 		if fieldToBit(field) == move.from {
@@ -130,44 +144,25 @@ func (hb *HumanBoard) IsPlayableFromField(field int) bool {
 	return false
 }
 
-func (hb *HumanBoard) GetTouchedField() int {
-	return hb.touchedField
-}
-
-func (hb *HumanBoard) IsTouchedField(field int) bool {
-	return field == hb.touchedField
-}
-
-func (hb *HumanBoard) IsplayableToField(field int) bool {
-	if hb.touchedField == 0 {
-		return false
-	}
+func (hb *HumanBoard) GetToFields(field int) []int {
+	var result []int
 
 	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
 	for _, move := range moveList {
-		if fieldToBit(hb.touchedField) == move.from && fieldToBit(field) == move.to {
-			return true
+		if fieldToBit(field) == move.from {
+			result = append(result, bitToField(move.to))
 		}
 	}
-	return false
+	return result
 }
 
 //-------------------------------------------------------------------------------------------------
-
-func (hb *HumanBoard) DoTouch(field int) {
-	hb.touchedField = field
-}
-
-func (hb *HumanBoard) UndoTouch() {
-	hb.touchedField = 0
-}
 
 func (hb *HumanBoard) DoMove(fromField, toField int) {
 	//todo verify if there is a field that is touched, corresponding with fromField
 	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
 	for _, move := range moveList {
 		if fieldToBit(fromField) == move.from && fieldToBit(toField) == move.to {
-			hb.UndoTouch()
 			hb.bitBoard.doMove(&move, hb.colorToMove)
 			hb.colorToMove = hb.OpponentColor()
 			return
@@ -175,4 +170,3 @@ func (hb *HumanBoard) DoMove(fromField, toField int) {
 	}
 	panic("move not found")
 }
-

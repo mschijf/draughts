@@ -40,23 +40,6 @@ func getBoard(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, result)
 }
 
-// @Router       /api/v1/touch/{fieldNumber} [post]
-func doFirstMovePart(c *gin.Context) {
-	fieldNumber, _ := strconv.Atoi(c.Param("fieldNumber"))
-	cookie := getStatusCookie(c)
-	result, statusString := service.DoFirstMovePart(cookie, fieldNumber)
-	setBoardStringCookie(c, statusString)
-	c.IndentedJSON(http.StatusOK, result)
-}
-
-// @Router       /api/v1/untouch [post]
-func undoFirstMovePart(c *gin.Context) {
-	cookie := getStatusCookie(c)
-	result, statusString := service.UndoFirstMovePart(cookie)
-	setBoardStringCookie(c, statusString)
-	c.IndentedJSON(http.StatusOK, result)
-}
-
 // @Router       /api/v1/move/{from}/{to} [post]
 func doMove(c *gin.Context) {
 	from, _ := strconv.Atoi(c.Param("from"))
@@ -66,14 +49,6 @@ func doMove(c *gin.Context) {
 	setBoardStringCookie(c, statusString)
 	c.IndentedJSON(http.StatusOK, result)
 }
-
-// // @Router       /api/v1/move/passmove [post]
-// func doPassMove(c *gin.Context) {
-// 	cookie := getStatusCookie(c)
-// 	result, statusString := service.DoPassMove(cookie)
-// 	setBoardStringCookie(c, statusString)
-// 	c.IndentedJSON(http.StatusOK, result)
-// }
 
 // // @Router       /api/v1/move/takeback/ [post]
 // func takeBackLastMove(c *gin.Context) {
@@ -110,8 +85,6 @@ func setHandlers(router *gin.Engine) {
 
 	router.GET("/api/v1/board", getBoard)
 	router.POST("/api/v1/board", getNewBoard)
-	router.POST("/api/v1/touch/:fieldNumber/", doFirstMovePart)
-	router.POST("/api/v1/untouch", undoFirstMovePart)
 	router.POST("/api/v1/move/:from/:to/", doMove)
 	// router.POST("/api/v1/move/takeback/", takeBackLastMove)
 }

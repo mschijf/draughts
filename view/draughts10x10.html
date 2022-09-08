@@ -155,7 +155,9 @@
         </div>
 
         <script>
+            var globalBoardFields
             const fieldIdPrefix = "field"
+            
             function toFieldId(fieldNumber) {
                 return fieldIdPrefix + fieldNumber
             }
@@ -202,15 +204,37 @@
                 }
             }
 
-            function drag(ev) {
-                var fieldNumber = toFieldNumber(ev.target.id)
-                ev.dataTransfer.setData("from", fieldNumber);
-                touchPiece(fieldNumber)
+            function showToFieldOptions(list) {
+                for (let i = 0; i < list.length; i++) {
+                    var element = document.getElementById(toFieldId(list[i]));
+                    element.style.cursor = "pointer"
+                    element.style.pointerEvents = 'auto';
+                    element.className = "dot movecandidate"
+                }
             }
 
-            function canceldrag(ev) {
+            function hideToFieldOptions(list) {
+                for (let i = 0; i < list.length; i++) {
+                    var element = document.getElementById(toFieldId(list[i]));
+                    element.style.cursor = "default"
+                    element.style.pointerEvents = 'none';
+                    element.className = "dot black_square"
+                }
+            }
+
+            function dragPiece(ev, list) {
+                for (let i = 0; i < list.length; i++) {
+                    var element = document.getElementById(toFieldId(list[i]));
+                    element.ondrop=function(){drop(event, list[i])}
+                    element.ondragover=function(){allowDrop(event)}
+                }
+                var fieldNumber = toFieldNumber(ev.target.id)
+                ev.dataTransfer.setData("from", fieldNumber);
+            }
+
+            function cancelDragPiece(ev) {
                 if (ev.dataTransfer.dropEffect == "none") {
-                    untouchPiece()
+                    showFields(globalBoardFields)
                 }
             }
 
@@ -224,7 +248,7 @@
                 executeMove(fromField, toField)
             }
 
-            function setElement(element, fromField, fieldInfo) {
+            function setElement(element, fieldInfo) {
                 var className = toClassName(fieldInfo.color)
                 element.className = className
                 element.innerHTML = ""    
@@ -234,21 +258,12 @@
 
                 element.setAttribute("draggable", false)
                 if (fieldInfo.isPlayableFromField) {
-                    //element.onclick = function(){touchPiece(fieldInfo.fieldNumber)}
-                    element.ondragstart=function(){drag(event)}
-                    element.ondragend=function(){canceldrag(event)}
+                    element.onmouseup=function(){hideToFieldOptions(fieldInfo.toFields)}
+                    element.onmousedown=function(){showToFieldOptions(fieldInfo.toFields)}
+                    element.ondragstart=function(){dragPiece(event, fieldInfo.toFields)}
+                    element.ondragend=function(){cancelDragPiece(event)}
+
                     element.setAttribute("draggable", true)
-                    element.style.cursor = "pointer"
-                    element.style.pointerEvents = 'auto';
-                } else if (fieldInfo.hasTouchedPiece) {
-                    //element.onclick = function(){untouchPiece()}
-                    element.style.cursor = "pointer"
-                    element.style.pointerEvents = 'auto';
-                } else if (fieldInfo.isPlayableToField) {
-                    element.className = "dot movecandidate"
-                    //element.onclick = function(){executeMove(fromField, fieldInfo.fieldNumber)}
-                    element.ondrop=function(){drop(event, fieldInfo.fieldNumber)}
-                    element.ondragover=function(){allowDrop(event)}
                     element.style.cursor = "pointer"
                     element.style.pointerEvents = 'auto';
                 } else {
@@ -258,17 +273,18 @@
             }
 
             function showBoard(board) {
-                showFields(board)
+                globalBoardFields = board.fields
+                showFields(board.fields)
                 showWhoIsToMove(board)
                 showActionButtons(board)
 //                 showComputerResult(board.searchResult)
                 showMiscellanious(board)
             }
 
-            function showFields(board) {
-                for (let i = 0; i < board.fields.length; i++) {
-                    var elem = document.getElementById(toFieldId(board.fields[i].fieldNumber));
-                    setElement(elem, board.touchedPieceField, board.fields[i])
+            function showFields(fields) {
+                for (let i = 0; i < fields.length; i++) {
+                    var elem = document.getElementById(toFieldId(fields[i].fieldNumber));
+                    setElement(elem, fields[i])
                 }
             }
 
@@ -340,30 +356,6 @@
                         if (!board.gameFinished && useComputer) {
                             computeMove()
                         }
-                    }
-                };
-                request.send();
-            }
-
-            function touchPiece(fromField) {
-                var request = new XMLHttpRequest();
-                request.open("POST", "api/v1/touch/" + fromField);
-                request.onreadystatechange = function() {
-                    if(this.readyState === 4 && this.status === 200) {
-                        var board = JSON.parse(this.responseText);
-                        showBoard(board);
-                    }
-                };
-                request.send();
-            }
-
-            function untouchPiece() {
-                var request = new XMLHttpRequest();
-                request.open("POST", "api/v1/untouch");
-                request.onreadystatechange = function() {
-                    if(this.readyState === 4 && this.status === 200) {
-                        var board = JSON.parse(this.responseText);
-                        showBoard(board);
                     }
                 };
                 request.send();

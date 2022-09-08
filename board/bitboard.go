@@ -63,6 +63,7 @@ BIT INDEX   3210 9876 5432 1098 7654 3210 9876 6432 1098 7654 3210 9876 5432 109
 
 WHITE-START 0000 0000 0111 1111 1110 1111 1111 1100 0000 0000 0000 0000 0000 0000 0000 0000
 BLACK-START 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0011 1111 1111 0111 1111 1110
+
 */
 
 type BitBoard struct {
@@ -74,12 +75,14 @@ const white = 0
 const black = 1
 
 const illegalBits uint64 = 0xFF_80_10_02_00_40_08_01
-const legalBits uint64  = ^illegalBits
+const legalBits uint64 = ^illegalBits
 
 const whiteStonesStartFields uint64 = 0x00_7F_EF_FC_00_00_00_00
 const blackStonesStartFields uint64 = 0x00_00_00_00_00_3F_F7_FE
-const whiteKingsStartFields = 0x0
-const blackKingsStartFields = 0x0
+const whiteKingsStartFields uint64 = 0x0
+const blackKingsStartFields uint64 = 0x0
+
+var kingLine = []uint64{0x00_00_00_00_00_00_00_3E, 0x00_7C_00_00_00_00_00_00}
 
 func InitBoard(whitePieces, blackPieces, whiteKings, blackKings uint64) BitBoard {
 	var bb = BitBoard{}
