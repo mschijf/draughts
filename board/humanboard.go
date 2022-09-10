@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"draughts/collection"
-	// "draughts/math/bit64math"
 	"strconv"
 	"strings"
 )
@@ -13,7 +12,6 @@ import (
 type HumanBoard struct {
 	bitBoard    BitBoard
 	colorToMove int
-	boardStack  collection.Stack[BitBoard]
 	moveStack   collection.Stack[Move]
 }
 
@@ -85,7 +83,7 @@ func (hb *HumanBoard) IsBlackKing(field int) bool {
 }
 
 func (hb *HumanBoard) HasHistory() bool {
-	return !hb.boardStack.IsEmpty()
+	return !hb.moveStack.IsEmpty()
 }
 
 func (hb *HumanBoard) IsEndOfGame() bool {
@@ -105,7 +103,7 @@ func (hb *HumanBoard) GetColorToMove() int {
 }
 
 func (hb *HumanBoard) IsPlayableFromField(field int) bool {
-	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
+	var moveList []Move = hb.bitBoard.GenerateMoves(hb.colorToMove)
 	for _, move := range moveList {
 		if fieldToBit(field) == move.from {
 			return true
@@ -117,7 +115,7 @@ func (hb *HumanBoard) IsPlayableFromField(field int) bool {
 func (hb *HumanBoard) GetToFields(field int) []int {
 	var result []int
 
-	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
+	var moveList []Move = hb.bitBoard.GenerateMoves(hb.colorToMove)
 	for _, move := range moveList {
 		if fieldToBit(field) == move.from {
 			result = append(result, bitToField(move.to))
@@ -161,32 +159,30 @@ func bitBoardToBoardString(bb *BitBoard, colorToMove int) string {
 }
 
 func (hb *HumanBoard) ToBoardStatusString() string {
-	if hb.boardStack.IsEmpty() {
-		return hb.ToBoardString()
+	var tmpStack collection.Stack[Move]
+	for !hb.moveStack.IsEmpty() {
+		move := hb.moveStack.Top()
+		tmpStack.Push(move)
+		hb.TakeBack()
 	}
 
-	stackSize := hb.boardStack.Size()
-	startPos := hb.boardStack.FromTop(stackSize - 1)
-	colorToMove := 1 - hb.colorToMove
-	if stackSize%2 == 0 {
-		colorToMove = hb.colorToMove
-	}
-	result := bitBoardToBoardString(startPos, colorToMove)
-	for i := stackSize - 1; i >= 0; i-- {
-		move := hb.moveStack.FromTop(i)
+	result := hb.ToBoardString()
+
+	for !tmpStack.IsEmpty() {
+		move := tmpStack.Pop()
 		result = fmt.Sprintf("%s:%02d%02d", result, bitToField(move.from), bitToField(move.to))
+		hb.DoMove(bitToField(move.from), bitToField(move.to))
 	}
+
 	return result
 }
 
 //-------------------------------------------------------------------------------------------------
 
 func (hb *HumanBoard) DoMove(fromField, toField int) {
-	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
+	var moveList []Move = hb.bitBoard.GenerateMoves(hb.colorToMove)
 	for _, move := range moveList {
 		if fieldToBit(fromField) == move.from && fieldToBit(toField) == move.to {
-			var orgBoard = hb.bitBoard
-			hb.boardStack.Push(&orgBoard)
 			hb.moveStack.Push(&move)
 			hb.bitBoard.doMove(&move, hb.colorToMove)
 			hb.colorToMove = 1 - hb.colorToMove
@@ -197,8 +193,7 @@ func (hb *HumanBoard) DoMove(fromField, toField int) {
 }
 
 func (hb *HumanBoard) TakeBack() {
-	orgBoard := hb.boardStack.Pop()
-	hb.moveStack.Pop()
+	move := hb.moveStack.Pop()
 	hb.colorToMove = 1 - hb.colorToMove
-	hb.bitBoard = *orgBoard
+	hb.bitBoard.undoMove(move, hb.colorToMove)
 }
