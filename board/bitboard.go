@@ -117,23 +117,19 @@ func GetStartBoard() BitBoard {
 // }
 
 func FirstPieceOfColorByShiftLeft(freeFields, color, fromField uint64, shiftNumber int) uint64 {
-     var last uint64
      for {
-          last = fromField
           fromField <<= shiftNumber
           if fromField & freeFields == 0 {
-               return last & color
+               return fromField & color
           }                
      }     
 }
 
 func FirstPieceOfColorByShiftRight(freeFields, color, fromField uint64, shiftNumber int) uint64 {
-     var last uint64
      for {
-          last = fromField
           fromField >>= shiftNumber
           if fromField & freeFields == 0 {
-               return last & color
+               return fromField & color
           }                
      }     
 }

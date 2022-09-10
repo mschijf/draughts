@@ -89,13 +89,180 @@ func (bitBoard *BitBoard) GenerateCaptureMoves(colorToMove int) []Move {
 
 func (bitBoard *BitBoard) generateKingCaptures(colorToMove int) []Move {
 	var resultList []Move
+	var piecesHitCount = 0
+
+	var colorOpponent = 1 - colorToMove
+	var opponent = bitBoard.kings[colorOpponent] | bitBoard.stones[colorOpponent]
+
+	candidates:=bitBoard.kings[colorToMove]
+	for candidates!=0 {
+		aKing := candidates &^ (candidates-1)
+		for dir := 5; dir <= 6; dir++ {
+			
+			tmpList := bitBoard.generateKingCapturesPerKingToLeft(colorToMove, aKing, aKing, 0, opponent, dir)
+			if len(tmpList) > 0 {
+				currentHitCount := bit64math.BitCount(tmpList[0].stonesHit)
+				if currentHitCount >= piecesHitCount {
+					if currentHitCount > piecesHitCount {
+						piecesHitCount = currentHitCount
+						resultList = tmpList
+					} else {
+						resultList = append(resultList, tmpList...)
+					}
+				}
+			}
+
+			tmpList = bitBoard.generateKingCapturesPerKingToRight(colorToMove, aKing, aKing, 0, opponent, dir)
+			if len(tmpList) > 0 {
+				currentHitCount := bit64math.BitCount(tmpList[0].stonesHit)
+				if currentHitCount >= piecesHitCount {
+					if currentHitCount > piecesHitCount {
+						piecesHitCount = currentHitCount
+						resultList = tmpList
+					} else {
+						resultList = append(resultList, tmpList...)
+					}
+				}
+			}
+
+		}
+		candidates ^= aKing
+	}
+
 	return resultList
 }
 
-// func (bitBoard *BitBoard) generateKingCapturesPerKing(colorToMove int, moveFrom, currentPos, piecesHit, opponentsToHit uint64) []Move {
-// 	var resultList []Move
-// 	return resultList
-// }
+func (bitBoard *BitBoard) generateKingCapturesPerKingToLeft(colorToMove int, moveFrom, currentPos, piecesHit, opponentsToHit uint64, dir int) []Move {
+	var resultList []Move
+	var last uint64
+
+	occupied := bitBoard.kings[0] | bitBoard.kings[1] | bitBoard.stones[0] | bitBoard.stones[1]
+	freeFields := (legalBits &^ occupied) | moveFrom
+
+	piecesHitCount := bit64math.BitCount(piecesHit)
+	localHitCount := piecesHitCount
+	hitCandidate := FirstPieceOfColorByShiftLeft(freeFields, opponentsToHit, currentPos, dir)
+	for hitCandidate != 0 {
+		moveTo := (hitCandidate << dir) & freeFields
+		opponentsToHit ^= hitCandidate
+		piecesHit |= hitCandidate
+		localHitCount++
+		for moveTo != 0 {
+			
+			if len(resultList) > 0 {
+				if localHitCount >= piecesHitCount {
+					if localHitCount > piecesHitCount {
+						piecesHitCount = localHitCount
+						resultList = []Move{{false, moveFrom, moveTo, piecesHit}}
+					} else {
+						resultList = append(resultList, Move{false, moveFrom, moveTo, piecesHit})
+					}
+				}
+			} else {
+				piecesHitCount = localHitCount
+				resultList = append(resultList, Move{false, moveFrom, moveTo, piecesHit})
+			}
+
+			tmpList := bitBoard.generateKingCapturesPerKingToLeft(colorToMove, moveFrom, moveTo, piecesHit, opponentsToHit, 11-dir)
+			if len(tmpList) > 0 {
+				currentHitCount := bit64math.BitCount(tmpList[0].stonesHit)
+				if currentHitCount >= piecesHitCount {
+					if currentHitCount > piecesHitCount {
+						piecesHitCount = currentHitCount
+						resultList = tmpList
+					} else {
+						resultList = append(resultList, tmpList...)
+					}
+				}
+			}
+
+			tmpList = bitBoard.generateKingCapturesPerKingToRight(colorToMove, moveFrom, moveTo, piecesHit, opponentsToHit, 11-dir)
+			if len(tmpList) > 0 {
+				currentHitCount := bit64math.BitCount(tmpList[0].stonesHit)
+				if currentHitCount >= piecesHitCount {
+					if currentHitCount > piecesHitCount {
+						piecesHitCount = currentHitCount
+						resultList = tmpList
+					} else {
+						resultList = append(resultList, tmpList...)
+					}
+				}
+			}
+
+			last = moveTo
+			moveTo = (moveTo << dir) & freeFields
+		}
+		hitCandidate = (last << dir) & opponentsToHit
+	}
+
+	return resultList
+}
+
+func (bitBoard *BitBoard) generateKingCapturesPerKingToRight(colorToMove int, moveFrom, currentPos, piecesHit, opponentsToHit uint64, dir int) []Move {
+	var resultList []Move
+	var last uint64
+
+	occupied := bitBoard.kings[0] | bitBoard.kings[1] | bitBoard.stones[0] | bitBoard.stones[1]
+	freeFields := (legalBits &^ occupied) | moveFrom
+
+	piecesHitCount := bit64math.BitCount(piecesHit)
+	localHitCount := piecesHitCount
+	hitCandidate := FirstPieceOfColorByShiftRight(freeFields, opponentsToHit, currentPos, dir)
+	for hitCandidate != 0 {
+		moveTo := (hitCandidate >> dir) & freeFields
+		opponentsToHit ^= hitCandidate
+		piecesHit |= hitCandidate
+		localHitCount++
+		for moveTo != 0 {
+			
+			if len(resultList) > 0 {
+				if localHitCount >= piecesHitCount {
+					if localHitCount > piecesHitCount {
+						piecesHitCount = localHitCount
+						resultList = []Move{{false, moveFrom, moveTo, piecesHit}}
+					} else {
+						resultList = append(resultList, Move{false, moveFrom, moveTo, piecesHit})
+					}
+				}
+			} else {
+				piecesHitCount = localHitCount
+				resultList = append(resultList, Move{false, moveFrom, moveTo, piecesHit})
+			}
+
+			tmpList := bitBoard.generateKingCapturesPerKingToLeft(colorToMove, moveFrom, moveTo, piecesHit, opponentsToHit, 11-dir)
+			if len(tmpList) > 0 {
+				currentHitCount := bit64math.BitCount(tmpList[0].stonesHit)
+				if currentHitCount >= piecesHitCount {
+					if currentHitCount > piecesHitCount {
+						piecesHitCount = currentHitCount
+						resultList = tmpList
+					} else {
+						resultList = append(resultList, tmpList...)
+					}
+				}
+			}
+
+			tmpList = bitBoard.generateKingCapturesPerKingToRight(colorToMove, moveFrom, moveTo, piecesHit, opponentsToHit, 11-dir)
+			if len(tmpList) > 0 {
+				currentHitCount := bit64math.BitCount(tmpList[0].stonesHit)
+				if currentHitCount >= piecesHitCount {
+					if currentHitCount > piecesHitCount {
+						piecesHitCount = currentHitCount
+						resultList = tmpList
+					} else {
+						resultList = append(resultList, tmpList...)
+					}
+				}
+			}
+
+			last = moveTo
+			moveTo = (moveTo >> dir) & freeFields
+		}
+		hitCandidate = (last >> dir) & opponentsToHit
+	}
+
+	return resultList
+}
 
 func (bitBoard *BitBoard) generateStoneCaptures(colorToMove int) []Move {
 	var resultList []Move
@@ -200,7 +367,7 @@ func (bitBoard *BitBoard) doMove(move *Move, colorToMove int) {
 			bitBoard.kings[colorToMove] ^= move.to
 		} else {
 			bitBoard.stones[colorToMove] ^= move.to
-		}		
+		}
 	} else {
 		bitBoard.kings[colorToMove] ^= move.from
 		bitBoard.kings[colorToMove] ^= move.to
