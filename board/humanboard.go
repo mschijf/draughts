@@ -60,27 +60,6 @@ func bitToField(bit uint64) int {
 	}
 }
 
-func StringToBitBoard(boardString string) HumanBoard {
-	if boardString == "" {
-		return InitStartBoard()
-	}
-	var boardStringParts = strings.Split(boardString, ":")
-	colorToMove, _ := strconv.Atoi(boardStringParts[0])
-	whitePieces, _ := strconv.ParseUint(boardStringParts[1], 16, 64)
-	blackPieces, _ := strconv.ParseUint(boardStringParts[2], 16, 64)
-	kings, _ := strconv.ParseUint(boardStringParts[3], 16, 64)
-
-	humanBoard := HumanBoard{bitBoard: InitBoard(whitePieces&^kings, blackPieces&^kings, whitePieces&kings, blackPieces&kings), colorToMove: colorToMove}
-
-	for i:=4; i < len(boardStringParts); i++ {
-		moveFrom, _ := strconv.Atoi(boardStringParts[i][0:2])
-		moveTo, _ := strconv.Atoi(boardStringParts[i][2:4])
-		humanBoard.DoMove(moveFrom, moveTo)
-	}
-
-	return humanBoard
-}
-
 func InitStartBoard() HumanBoard {
 	return HumanBoard{bitBoard: GetStartBoard(), colorToMove: white}
 }
@@ -121,36 +100,6 @@ func (hb *HumanBoard) BlackHasWon() bool {
 	return false
 }
 
-func (hb *HumanBoard) ToBoardString() string {
-	return hb.bitBoard.toBoardString(hb.colorToMove)
-}
-
-func (bb *BitBoard) toBoardString(colorToMove int) string {
-	var whitePieces = bb.stones[1] | bb.kings[1]
-	var blackPieces = bb.stones[0] | bb.kings[0]
-	var kings = bb.kings[0] | bb.kings[1]
-	return fmt.Sprintf("%d:%x:%x:%x", colorToMove, blackPieces, whitePieces, kings)
-}
-
-func (hb *HumanBoard) ToBoardStatusString() string {
-	if hb.boardStack.IsEmpty() {
-		return hb.ToBoardString()
-	}
-	
-	stackSize := hb.boardStack.Size()
-	startPos := hb.boardStack.FromTop(stackSize-1)
-	colorToMove := 1 - hb.colorToMove
-	if stackSize % 2 == 0 {
-		colorToMove  = hb.colorToMove
-	} 
-	result := startPos.toBoardString(colorToMove)
-	for i := stackSize - 1; i >= 0; i-- {
-		move := hb.moveStack.FromTop(i)
-		result = fmt.Sprintf("%s:%02d%02d",result, bitToField(move.from), bitToField(move.to))
-	}
-	return result
-}
-
 func (hb *HumanBoard) GetColorToMove() int {
 	return hb.colorToMove
 }
@@ -173,6 +122,59 @@ func (hb *HumanBoard) GetToFields(field int) []int {
 		if fieldToBit(field) == move.from {
 			result = append(result, bitToField(move.to))
 		}
+	}
+	return result
+}
+
+//-------------------------------------------------------------------------------------------------
+
+func BoardStatusStringToBitBoard(boardString string) HumanBoard {
+	if boardString == "" {
+		return InitStartBoard()
+	}
+	var boardStringParts = strings.Split(boardString, ":")
+	colorToMove, _ := strconv.Atoi(boardStringParts[0])
+	whitePieces, _ := strconv.ParseUint(boardStringParts[1], 16, 64)
+	blackPieces, _ := strconv.ParseUint(boardStringParts[2], 16, 64)
+	kings, _ := strconv.ParseUint(boardStringParts[3], 16, 64)
+
+	humanBoard := HumanBoard{bitBoard: InitBoard(whitePieces&^kings, blackPieces&^kings, whitePieces&kings, blackPieces&kings), colorToMove: colorToMove}
+
+	for i := 4; i < len(boardStringParts); i++ {
+		moveFrom, _ := strconv.Atoi(boardStringParts[i][0:2])
+		moveTo, _ := strconv.Atoi(boardStringParts[i][2:4])
+		humanBoard.DoMove(moveFrom, moveTo)
+	}
+
+	return humanBoard
+}
+
+func (hb *HumanBoard) ToBoardString() string {
+	return bitBoardToBoardString(&hb.bitBoard, hb.colorToMove)
+}
+
+func bitBoardToBoardString(bb *BitBoard, colorToMove int) string {
+	var whitePieces = bb.stones[1] | bb.kings[1]
+	var blackPieces = bb.stones[0] | bb.kings[0]
+	var kings = bb.kings[0] | bb.kings[1]
+	return fmt.Sprintf("%d:%x:%x:%x", colorToMove, blackPieces, whitePieces, kings)
+}
+
+func (hb *HumanBoard) ToBoardStatusString() string {
+	if hb.boardStack.IsEmpty() {
+		return hb.ToBoardString()
+	}
+
+	stackSize := hb.boardStack.Size()
+	startPos := hb.boardStack.FromTop(stackSize - 1)
+	colorToMove := 1 - hb.colorToMove
+	if stackSize%2 == 0 {
+		colorToMove = hb.colorToMove
+	}
+	result := bitBoardToBoardString(startPos, colorToMove)
+	for i := stackSize - 1; i >= 0; i-- {
+		move := hb.moveStack.FromTop(i)
+		result = fmt.Sprintf("%s:%02d%02d", result, bitToField(move.from), bitToField(move.to))
 	}
 	return result
 }
