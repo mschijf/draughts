@@ -50,13 +50,13 @@ func doMove(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, result)
 }
 
-// // @Router       /api/v1/move/takeback/ [post]
-// func takeBackLastMove(c *gin.Context) {
-// 	cookie := getStatusCookie(c)
-// 	result, statusString := service.TakeBackLastMove(cookie)
-// 	setBoardStringCookie(c, statusString)
-// 	c.IndentedJSON(http.StatusOK, result)
-// }
+// @Router       /api/v1/move/takeback/ [post]
+func takeBackLastMove(c *gin.Context) {
+	cookie := getStatusCookie(c)
+	result, statusString := service.TakeBackLastMove(cookie)
+	setBoardStringCookie(c, statusString)
+	c.IndentedJSON(http.StatusOK, result)
+}
 
 // @Router       / [get]
 func getHtml(c *gin.Context) {
@@ -86,7 +86,7 @@ func setHandlers(router *gin.Engine) {
 	router.GET("/api/v1/board", getBoard)
 	router.POST("/api/v1/board", getNewBoard)
 	router.POST("/api/v1/move/:from/:to/", doMove)
-	// router.POST("/api/v1/move/takeback/", takeBackLastMove)
+	router.POST("/api/v1/move/takeback/", takeBackLastMove)
 }
 
 func startRouter(router *gin.Engine) {

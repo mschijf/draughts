@@ -4,16 +4,17 @@ import (
 	"draughts/math/bit64math"
 	"fmt"
 
-	// "draughts/collection"
+	"draughts/collection"
 	// "draughts/math/bit64math"
 	"strconv"
 	"strings"
 )
 
 type HumanBoard struct {
-	bitBoard     BitBoard
-	colorToMove  int
-	// stack       collection.Stack[Move]
+	bitBoard    BitBoard
+	colorToMove int
+	boardStack  collection.Stack[BitBoard]
+	moveStack   collection.Stack[Move]
 }
 
 /*
@@ -71,6 +72,12 @@ func StringToBitBoard(boardString string) HumanBoard {
 
 	humanBoard := HumanBoard{bitBoard: InitBoard(whitePieces&^kings, blackPieces&^kings, whitePieces&kings, blackPieces&kings), colorToMove: colorToMove}
 
+	for i:=4; i < len(boardStringParts); i++ {
+		moveFrom, _ := strconv.Atoi(boardStringParts[i][0:2])
+		moveTo, _ := strconv.Atoi(boardStringParts[i][2:4])
+		humanBoard.DoMove(moveFrom, moveTo)
+	}
+
 	return humanBoard
 }
 
@@ -99,8 +106,7 @@ func (hb *HumanBoard) IsBlackKing(field int) bool {
 }
 
 func (hb *HumanBoard) HasHistory() bool {
-	// return !hb.stack.IsEmpty()
-	return false
+	return !hb.boardStack.IsEmpty()
 }
 
 func (hb *HumanBoard) IsEndOfGame() bool {
@@ -116,18 +122,33 @@ func (hb *HumanBoard) BlackHasWon() bool {
 }
 
 func (hb *HumanBoard) ToBoardString() string {
-	var whitePieces = hb.bitBoard.stones[1] | hb.bitBoard.kings[1]
-	var blackPieces = hb.bitBoard.stones[0] | hb.bitBoard.kings[0]
-	var kings = hb.bitBoard.kings[0] | hb.bitBoard.kings[1]
-	return fmt.Sprintf("%d:%x:%x:%x", hb.colorToMove, blackPieces, whitePieces, kings)
+	return hb.bitBoard.toBoardString(hb.colorToMove)
+}
+
+func (bb *BitBoard) toBoardString(colorToMove int) string {
+	var whitePieces = bb.stones[1] | bb.kings[1]
+	var blackPieces = bb.stones[0] | bb.kings[0]
+	var kings = bb.kings[0] | bb.kings[1]
+	return fmt.Sprintf("%d:%x:%x:%x", colorToMove, blackPieces, whitePieces, kings)
 }
 
 func (hb *HumanBoard) ToBoardStatusString() string {
-	return hb.ToBoardString()
-}
-
-func (hb *HumanBoard) OpponentColor() int {
-	return 1 - hb.colorToMove
+	if hb.boardStack.IsEmpty() {
+		return hb.ToBoardString()
+	}
+	
+	stackSize := hb.boardStack.Size()
+	startPos := hb.boardStack.FromTop(stackSize-1)
+	colorToMove := 1 - hb.colorToMove
+	if stackSize % 2 == 0 {
+		colorToMove  = hb.colorToMove
+	} 
+	result := startPos.toBoardString(colorToMove)
+	for i := stackSize - 1; i >= 0; i-- {
+		move := hb.moveStack.FromTop(i)
+		result = fmt.Sprintf("%s:%02d%02d",result, bitToField(move.from), bitToField(move.to))
+	}
+	return result
 }
 
 func (hb *HumanBoard) GetColorToMove() int {
@@ -159,14 +180,23 @@ func (hb *HumanBoard) GetToFields(field int) []int {
 //-------------------------------------------------------------------------------------------------
 
 func (hb *HumanBoard) DoMove(fromField, toField int) {
-	//todo verify if there is a field that is touched, corresponding with fromField
 	var moveList []Move = hb.bitBoard.GeneratePositions(hb.colorToMove)
 	for _, move := range moveList {
 		if fieldToBit(fromField) == move.from && fieldToBit(toField) == move.to {
+			var orgBoard = hb.bitBoard
+			hb.boardStack.Push(&orgBoard)
+			hb.moveStack.Push(&move)
 			hb.bitBoard.doMove(&move, hb.colorToMove)
-			hb.colorToMove = hb.OpponentColor()
+			hb.colorToMove = 1 - hb.colorToMove
 			return
 		}
 	}
 	panic("move not found")
+}
+
+func (hb *HumanBoard) TakeBack() {
+	orgBoard := hb.boardStack.Pop()
+	hb.moveStack.Pop()
+	hb.colorToMove = 1 - hb.colorToMove
+	hb.bitBoard = *orgBoard
 }

@@ -92,6 +92,11 @@ func (bitBoard *BitBoard) generateKingCaptures(colorToMove int) []Move {
 	return resultList
 }
 
+// func (bitBoard *BitBoard) generateKingCapturesPerKing(colorToMove int, moveFrom, currentPos, piecesHit, opponentsToHit uint64) []Move {
+// 	var resultList []Move
+// 	return resultList
+// }
+
 func (bitBoard *BitBoard) generateStoneCaptures(colorToMove int) []Move {
 	var resultList []Move
 	var piecesHitCount = 0

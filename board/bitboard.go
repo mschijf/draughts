@@ -101,3 +101,39 @@ func GetStartBoard() BitBoard {
 	bb.kings[black] = blackKingsStartFields
 	return bb
 }
+
+// Int64 FINDPIECE (Int64 freeFields, Int64 color, Int64 fromField, int direction)
+// {
+// 	Int64 last, stillFree;
+
+//     do {
+//     	last = fromField;
+//         fromField = SGNSHR64 (fromField, direction);
+//         stillFree = AND64(fromField, freeFields);
+//     } while (NOTNULL(stillFree));
+//     last = SGNSHR64 (last, direction);
+
+//     return (AND64(last, color));
+// }
+
+func FirstPieceOfColorByShiftLeft(freeFields, color, fromField uint64, shiftNumber int) uint64 {
+     var last uint64
+     for {
+          last = fromField
+          fromField <<= shiftNumber
+          if fromField & freeFields == 0 {
+               return last & color
+          }                
+     }     
+}
+
+func FirstPieceOfColorByShiftRight(freeFields, color, fromField uint64, shiftNumber int) uint64 {
+     var last uint64
+     for {
+          last = fromField
+          fromField >>= shiftNumber
+          if fromField & freeFields == 0 {
+               return last & color
+          }                
+     }     
+}

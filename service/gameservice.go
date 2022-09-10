@@ -20,14 +20,8 @@ func DoMove(boardStatusString string, from, to int) (BoardModel, string) {
 	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
 }
 
-// func DoPassMove(boardStatusString string) (BoardModel, string) {
-// 	currentBoard := board.StringToBitBoard(boardStatusString)
-// 	currentBoard.DoPassMove()
-// 	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
-// }
-
-// func TakeBackLastMove(boardStatusString string) (BoardModel, string) {
-// 	currentBoard := board.StringToBitBoard(boardStatusString)
-// 	currentBoard.TakeBack()
-// 	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
-// }
+func TakeBackLastMove(boardStatusString string) (BoardModel, string) {
+	currentBoard := board.StringToBitBoard(boardStatusString)
+	currentBoard.TakeBack()
+	return ToBoardModel(&currentBoard), currentBoard.ToBoardStatusString()
+}
