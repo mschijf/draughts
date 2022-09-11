@@ -73,6 +73,7 @@ type BitBoard struct {
 
 const white = 0
 const black = 1
+const unknownColor = -9999
 
 const illegalBits uint64 = 0xFF_80_10_02_00_40_08_01
 const legalBits uint64 = ^illegalBits
@@ -117,19 +118,19 @@ func GetStartBoard() BitBoard {
 // }
 
 func FirstPieceOfColorByShiftLeft(freeFields, color, fromField uint64, shiftNumber int) uint64 {
-     for {
-          fromField <<= shiftNumber
-          if fromField & freeFields == 0 {
-               return fromField & color
-          }                
-     }     
+	for {
+		fromField <<= shiftNumber
+		if fromField&freeFields == 0 {
+			return fromField & color
+		}
+	}
 }
 
 func FirstPieceOfColorByShiftRight(freeFields, color, fromField uint64, shiftNumber int) uint64 {
-     for {
-          fromField >>= shiftNumber
-          if fromField & freeFields == 0 {
-               return fromField & color
-          }                
-     }     
+	for {
+		fromField >>= shiftNumber
+		if fromField&freeFields == 0 {
+			return fromField & color
+		}
+	}
 }

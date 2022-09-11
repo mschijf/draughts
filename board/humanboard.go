@@ -3,6 +3,7 @@ package board
 import (
 	"draughts/math/bit64math"
 	"fmt"
+	"log"
 
 	"draughts/collection"
 	"strconv"
@@ -58,9 +59,7 @@ func bitToField(bit uint64) int {
 	}
 }
 
-func InitStartBoard() HumanBoard {
-	return HumanBoard{bitBoard: GetStartBoard(), colorToMove: white}
-}
+//-------------------------------------------------------------------------------------------------
 
 func (hb *HumanBoard) IsBlackToMove() bool {
 	return hb.colorToMove == black
@@ -126,7 +125,15 @@ func (hb *HumanBoard) GetToFields(field int) []int {
 
 //-------------------------------------------------------------------------------------------------
 
-func BoardStatusStringToBitBoard(boardString string) HumanBoard {
+func InitStartBoard() HumanBoard {
+	return HumanBoard{bitBoard: GetStartBoard(), colorToMove: white}
+}
+
+func InitEmptyBoard() HumanBoard {
+	return HumanBoard{bitBoard: InitBoard(0, 0, 0, 0), colorToMove: white}
+}
+
+func BoardStatusStringToHumanBoard(boardString string) HumanBoard {
 	if boardString == "" {
 		return InitStartBoard()
 	}
@@ -175,6 +182,111 @@ func (hb *HumanBoard) ToBoardStatusString() string {
 	}
 
 	return result
+}
+
+//
+// Examples:
+//   [FEN "B:W18,24,27,28,K10,K15:B12,16,20,K22,K25,K29"]
+//   [FEN "B:W18,19,21,23,24,26,29,30,31,32:B1,2,3,4,6,7,9,10,11,12"]
+//   [FEN "W:W31-50:B1-20"]
+//
+// See: http://pdn.fmjd.org/fen.html#fen-section
+//
+func FenStringToHumanBoard(fenString string) HumanBoard {
+	if fenString == "" {
+		return InitStartBoard()
+	}
+	var boardStringParts = strings.Split(fenString, ":")
+	if len(boardStringParts) != 3 {
+		log.Printf("FEN string '%s' does not have the expected 3 parts ", fenString)
+		return InitEmptyBoard()
+	}
+
+	var whiteStones, blackStones, whiteKings, blackKings uint64
+	colorToMove := getColorFromFen(boardStringParts[0])
+	if colorToMove != white && colorToMove != black {
+		log.Printf("FEN string '%s' incorrect colorToMove ", fenString)
+		return InitEmptyBoard()
+	}
+	color, stones, kings := getPiecesBitStringFromFen(boardStringParts[1])
+	if color == white {
+		whiteStones = stones
+		whiteKings = kings
+	} else if color == black {
+		blackStones = stones
+		blackKings = kings
+	} else {
+		log.Printf("FEN string '%s' incorrect color in first part ", fenString)
+		return InitEmptyBoard()
+	}
+	color, stones, kings = getPiecesBitStringFromFen(boardStringParts[2])
+	if color == white {
+		whiteStones = stones
+		whiteKings = kings
+	} else if color == black {
+		blackStones = stones
+		blackKings = kings
+	} else {
+		log.Printf("FEN string '%s' incorrect color in second part ", fenString)
+		return InitEmptyBoard()
+	}
+
+	return HumanBoard{bitBoard: InitBoard(whiteStones, blackStones, whiteKings, blackKings), colorToMove: colorToMove}
+}
+
+func getColorFromFen(fenColorString string) int {
+	if len(fenColorString) != 1 {
+		return unknownColor
+	}
+	switch fenColorString[0] {
+	case 'W':
+		return white
+	case 'B':
+		return black
+	default:
+		return unknownColor
+	}
+}
+
+func getPiecesBitStringFromFen(fenPiecesString string) (int, uint64, uint64) {
+	var kings, stones uint64 = 0, 0
+
+	if len(fenPiecesString) < 1 {
+		return unknownColor, 0, 0
+	}
+	color := getColorFromFen(fenPiecesString[0:1])
+	parts := strings.Split(fenPiecesString[1:], ",")
+	for _, part := range parts {
+		if len(part) > 0 {
+			if part[0] == 'K' {
+				kings |= partBits(part[1:])
+			} else {
+				stones |= partBits(part)
+			}
+		}
+	}
+	return color, stones, kings
+}
+
+func partBits(part string) uint64 {
+	subParts := strings.Split(part, "-")
+	if len(subParts) == 1 {
+		value, _ := strconv.Atoi(subParts[0])
+		if value >= 1 && value <= 50 {
+			return fieldToBit(value)
+		}
+	} else if len(subParts) == 2 {
+		fromValue, _ := strconv.Atoi(subParts[0])
+		toValue, _ := strconv.Atoi(subParts[1])
+		if fromValue >= 1 && fromValue <= 50 && toValue >= 1 && toValue <= 50 {
+			value := uint64(0)
+			for i := fromValue; i <= toValue; i++ {
+				value |= fieldToBit(i)
+			}
+			return value
+		}
+	}
+	return 0
 }
 
 //-------------------------------------------------------------------------------------------------

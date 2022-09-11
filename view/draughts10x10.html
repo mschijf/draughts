@@ -92,6 +92,9 @@
                 </table>
             </div>
             <div class="grid-item">
+                <label for="fenSTring">Fen String: </label>
+                <input type="text" id="fenString" name="fenString" >
+                <button id="buttonFen" onclick="confirmFen()">Confirm Fen</button>
                 <table class="table2">
                     <tr>
                         <td class="tableleft" id="loggingInfo"></td>
@@ -204,21 +207,25 @@
                 }
             }
 
-            function showToFieldOptions(list) {
-                for (let i = 0; i < list.length; i++) {
-                    var element = document.getElementById(toFieldId(list[i]));
-                    element.style.cursor = "pointer"
-                    element.style.pointerEvents = 'auto';
-                    element.className = "dot movecandidate"
+            function showToFieldOptions(fieldInfo) {
+                for (let i = 0; i < fieldInfo.toFields.length; i++) {
+                    if (fieldInfo.fieldNumber != fieldInfo.toFields[i]) {
+                        var element = document.getElementById(toFieldId(fieldInfo.toFields[i]));
+                        element.style.cursor = "pointer"
+                        element.style.pointerEvents = 'auto';
+                        element.className = "dot movecandidate"
+                    }
                 }
             }
 
-            function hideToFieldOptions(list) {
-                for (let i = 0; i < list.length; i++) {
-                    var element = document.getElementById(toFieldId(list[i]));
-                    element.style.cursor = "default"
-                    element.style.pointerEvents = 'none';
-                    element.className = "dot black_square"
+            function hideToFieldOptions(fieldInfo) {
+                for (let i = 0; i < fieldInfo.toFields.length; i++) {
+                    if (fieldInfo.fieldNumber != fieldInfo.toFields[i]) {
+                        var element = document.getElementById(toFieldId(fieldInfo.toFields[i]));
+                        element.style.cursor = "default"
+                        element.style.pointerEvents = 'none';
+                        element.className = "dot black_square"
+                    }
                 }
             }
 
@@ -258,8 +265,8 @@
 
                 element.setAttribute("draggable", false)
                 if (fieldInfo.isPlayableFromField) {
-                    element.onmouseup=function(){hideToFieldOptions(fieldInfo.toFields)}
-                    element.onmousedown=function(){showToFieldOptions(fieldInfo.toFields)}
+                    element.onmouseup=function(){hideToFieldOptions(fieldInfo)}
+                    element.onmousedown=function(){showToFieldOptions(fieldInfo)}
                     element.ondragstart=function(){dragPiece(event, fieldInfo.toFields)}
                     element.ondragend=function(){cancelDragPiece(event)}
 
@@ -299,7 +306,7 @@
 
             function showWhoIsToMove(board) {
                 var elem = document.getElementById("whoistomove");
-                elem.style.backgroundColor = toClassName(board.colorToMove);
+                elem.className = toClassName(board.colorToMove);
             }
 
             function showActionButtons(board) {
@@ -340,6 +347,10 @@
 
             function showComputeStatusInfo(info) {
                 document.getElementById("loggingInfo").innerText = info.statusLine
+            }
+
+            function confirmFen() {
+                getBoardByFen(document.getElementById("fenString").value)
             }
         </script>
 
@@ -410,6 +421,23 @@
                     }
                 };
                 request.send();
+            }
+
+            function getBoardByFen(fenString) {
+                var request = new XMLHttpRequest();
+                request.open("POST", "api/v1/board/fen/");
+                request.setRequestHeader("Accept","application/json")
+                request.setRequestHeader("Content-Type","text/plain")
+
+                request.onreadystatechange = function() {
+                    if(this.readyState === 4 && this.status === 200) {
+                        var board = JSON.parse(this.responseText);
+                        showBoard(board);
+                    }
+                };
+
+                var data = fenString;
+                request.send(data);
             }
 
 //             function getComputeStatusInfo() {

@@ -80,3 +80,17 @@ func Test_bitBoard_perft_print(t *testing.T) {
 		fmt.Printf("depth %3d  : %12.6f ms --> %14d\n", i, diff.Seconds(), result)
 	}
 }
+
+func Test_bitBoard_perft_fromFen_print(t *testing.T) {
+	// var hb = FenStringToHumanBoard("B:W6,9,10,11,20,21,22,23,30,K31,33,37,41,42,43,44,46:BK17,K24")
+	var hb = FenStringToHumanBoard("W:W25,27,28,30,32,33,34,35,37,38:B12,13,14,16,18,19,21,23,24,26")
+	// var hb = FenStringToHumanBoard("B:W7,K8,K21,K44:BK2")
+	// var hb = FenStringToHumanBoard("B:W33,34,K43,44:B29")
+
+	for i := 1; i < 10; i++ {
+		currentTime := time.Now()
+		result := hb.bitBoard.perft(i, hb.colorToMove)
+		diff := time.Since(currentTime)
+		fmt.Printf("depth %3d  : %12.6f ms --> %14d\n", i, diff.Seconds(), result)
+	}
+}

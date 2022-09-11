@@ -58,7 +58,6 @@ func (bitBoard *BitBoard) generateKingCaptures(colorToMove int) []Move {
 	}
 
 	resultList = removeDuplicates(resultList)
-
 	return resultList
 }
 
@@ -170,13 +169,24 @@ func upMergeResultList(resultList []Move, piecesHitCount int, tmpList []Move) ([
 }
 
 func removeDuplicates(resultList []Move) []Move {
-	for i := 0; i < len(resultList)-1; i++ {
-		for j := i + 1; j < len(resultList); j++ {
-			if resultList[i].from == resultList[j].from && resultList[i].to == resultList[j].to {
-				resultList[j] = resultList[len(resultList)-1]
-				resultList = resultList[:len(resultList)-1]
-			}
+	processed := map[uint64]struct{}{}
+	w := 0
+	for _, s := range resultList {
+		if _, exists := processed[s.from|s.to]; !exists {
+			processed[s.from|s.to] = struct{}{}
+			resultList[w] = s
+			w++
 		}
 	}
-	return resultList
+	return resultList[:w]
+
+	// for i := 0; i < len(resultList)-1; i++ {
+	// 	for j := i + 1; j < len(resultList); j++ {
+	// 		if resultList[i].from == resultList[j].from && resultList[i].to == resultList[j].to {
+	// 			resultList[j] = resultList[len(resultList)-1]
+	// 			resultList = resultList[:len(resultList)-1]
+	// 		}
+	// 	}
+	// }
+	// return resultList
 }

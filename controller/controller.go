@@ -3,6 +3,7 @@ package controller
 import (
 	_ "draughts/docs"
 	"draughts/service"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -36,6 +37,14 @@ func getNewBoard(c *gin.Context) {
 func getBoard(c *gin.Context) {
 	cookie := getStatusCookie(c)
 	result, statusString := service.GetBoard(cookie)
+	setBoardStringCookie(c, statusString)
+	c.IndentedJSON(http.StatusOK, result)
+}
+
+// @Router       /api/v1/board/fen/ [post]
+func getBoardByFen(c *gin.Context) {
+	fenString, _ := ioutil.ReadAll(c.Request.Body)
+	result, statusString := service.GetBoardByFen(string(fenString[:]))
 	setBoardStringCookie(c, statusString)
 	c.IndentedJSON(http.StatusOK, result)
 }
@@ -85,6 +94,7 @@ func setHandlers(router *gin.Engine) {
 
 	router.GET("/api/v1/board", getBoard)
 	router.POST("/api/v1/board", getNewBoard)
+	router.POST("/api/v1/board/fen/", getBoardByFen)
 	router.POST("/api/v1/move/:from/:to/", doMove)
 	router.POST("/api/v1/move/takeback/", takeBackLastMove)
 }
