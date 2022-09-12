@@ -95,27 +95,8 @@ func InitBoard(whitePieces, blackPieces, whiteKings, blackKings uint64) BitBoard
 }
 
 func GetStartBoard() BitBoard {
-	var bb = BitBoard{}
-	bb.stones[white] = whiteStonesStartFields
-	bb.stones[black] = blackStonesStartFields
-	bb.kings[white] = whiteKingsStartFields
-	bb.kings[black] = blackKingsStartFields
-	return bb
+	return InitBoard(whiteStonesStartFields, blackStonesStartFields, whiteKingsStartFields, blackKingsStartFields)
 }
-
-// Int64 FINDPIECE (Int64 freeFields, Int64 color, Int64 fromField, int direction)
-// {
-// 	Int64 last, stillFree;
-
-//     do {
-//     	last = fromField;
-//         fromField = SGNSHR64 (fromField, direction);
-//         stillFree = AND64(fromField, freeFields);
-//     } while (NOTNULL(stillFree));
-//     last = SGNSHR64 (last, direction);
-
-//     return (AND64(last, color));
-// }
 
 func FirstPieceOfColorByShiftLeft(freeFields, color, fromField uint64, shiftNumber int) uint64 {
 	for {

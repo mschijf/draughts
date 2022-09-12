@@ -179,14 +179,4 @@ func removeDuplicates(resultList []Move) []Move {
 		}
 	}
 	return resultList[:w]
-
-	// for i := 0; i < len(resultList)-1; i++ {
-	// 	for j := i + 1; j < len(resultList); j++ {
-	// 		if resultList[i].from == resultList[j].from && resultList[i].to == resultList[j].to {
-	// 			resultList[j] = resultList[len(resultList)-1]
-	// 			resultList = resultList[:len(resultList)-1]
-	// 		}
-	// 	}
-	// }
-	// return resultList
 }

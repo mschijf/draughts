@@ -193,9 +193,12 @@ func (hb *HumanBoard) ToBoardStatusString() string {
 // See: http://pdn.fmjd.org/fen.html#fen-section
 //
 func FenStringToHumanBoard(fenString string) HumanBoard {
+	fenString = strings.TrimSuffix(fenString, ".")
+	
 	if fenString == "" {
 		return InitStartBoard()
 	}
+	
 	var boardStringParts = strings.Split(fenString, ":")
 	if len(boardStringParts) != 3 {
 		log.Printf("FEN string '%s' does not have the expected 3 parts ", fenString)

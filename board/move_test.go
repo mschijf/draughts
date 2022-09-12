@@ -8,6 +8,8 @@ import (
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+// OLD
+//
 // depth   1  :     0.000015 ms -->              9
 // depth   2  :     0.000003 ms -->             81
 // depth   3  :     0.000038 ms -->            658
@@ -20,6 +22,19 @@ import (
 // depth  10  :    12.458864 ms -->      258895763
 //
 // appr. 20.780.045 nodes/second
+//
+// BASIS
+//
+// depth   1  :     0.000016 ms -->              9
+// depth   2  :     0.000003 ms -->             81
+// depth   3  :     0.000042 ms -->            658
+// depth   4  :     0.000284 ms -->           4265
+// depth   5  :     0.002076 ms -->          27117
+// depth   6  :     0.009635 ms -->         167140
+// depth   7  :     0.057497 ms -->        1049442
+// depth   8  :     0.355696 ms -->        6483961
+// depth   9  :     2.115143 ms -->       41022423
+// depth  10  :    13.661378 ms -->      258895763
 //
 // see also https://damforum.nl/bb3/viewtopic.php?t=2308
 //
@@ -73,7 +88,7 @@ func Test_bitBoard_perft(t *testing.T) {
 
 func Test_bitBoard_perft_print(t *testing.T) {
 	var hb = InitStartBoard()
-	for i := 1; i < 12; i++ {
+	for i := 1; i < 10; i++ {
 		currentTime := time.Now()
 		result := hb.bitBoard.perft(i, hb.colorToMove)
 		diff := time.Since(currentTime)
@@ -82,12 +97,12 @@ func Test_bitBoard_perft_print(t *testing.T) {
 }
 
 func Test_bitBoard_perft_fromFen_print(t *testing.T) {
-	// var hb = FenStringToHumanBoard("B:W6,9,10,11,20,21,22,23,30,K31,33,37,41,42,43,44,46:BK17,K24")
-	var hb = FenStringToHumanBoard("W:W25,27,28,30,32,33,34,35,37,38:B12,13,14,16,18,19,21,23,24,26")
+	var hb = FenStringToHumanBoard("B:W6,9,10,11,20,21,22,23,30,K31,33,37,41,42,43,44,46:BK17,K24")
+	// var hb = FenStringToHumanBoard("W:W25,27,28,30,32,33,34,35,37,38:B12,13,14,16,18,19,21,23,24,26")
 	// var hb = FenStringToHumanBoard("B:W7,K8,K21,K44:BK2")
 	// var hb = FenStringToHumanBoard("B:W33,34,K43,44:B29")
 
-	for i := 1; i < 10; i++ {
+	for i := 1; i < 11; i++ {
 		currentTime := time.Now()
 		result := hb.bitBoard.perft(i, hb.colorToMove)
 		diff := time.Since(currentTime)
